@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="mobile-container">
+    <div class="header-logo">
+        <img src="./images/students_corner.png" alt="Логотип" style="max-width: 100%; height: auto; object-fit: contain;">
+    </div>
+
+    <div class="slider-container">
+        <div class="slider-wrapper" id="sliderWrapper">
+            <div class="slide"><img src="./images/diploma.webp" alt="Охрана труда"></div>
+            <div class="slide"><img src="./images/6410690722451365045.jpg" alt="Педагогика"></div>
+            <div class="slide"><img src="./images/course_1.jpg" alt="Рабочие профессии"></div>
+            <div class="slide"><img src="./images/88-gHQq11R0.jpg" alt="Электробезопасность"></div>
+        </div>
+        <button class="slider-btn prev" onclick="moveSlide(-1)">&#10094;</button>
+        <button class="slider-btn next" onclick="moveSlide(1)">&#10095;</button>
+    </div>
+
+    <div class="cabinet-header">
+        <h2>Личный кабинет</h2>
+        <button class="btn-outline" onclick="logout()">Выйти</button>
+    </div>
+    
+    <h3>Мои заявки</h3>
+    <div id="userRequestsList"></div>
+
+    <div class="actions" style="margin-top: 25px;">
+        <button class="btn-primary" onclick="window.location.href='new-request.html'">+ Новая заявка</button>
+    </div>
+</div>
+
+<div id="notificationModal" class="modal">
+    <div class="modal-content">
+        <p id="modalText">Уведомление</p>
+        <button class="btn-primary" onclick="closeModal()">Закрыть</button>
+    </div>
+</div>
+
+<script>
+    let slideIndex = 0;
+    function showSlide(index) {
+        const wrapper = document.getElementById('sliderWrapper');
+        const slides = document.querySelectorAll('.slide');
+        if(index >= slides.length) index = 0;
+        if(index < 0) index = slides.length - 1;
+        slideIndex = index;
+        wrapper.style.transform = `translateX(-${index * 100}%)`;
+    }
+    function moveSlide(n) { showSlide(slideIndex + n); }
+    setInterval(() => { moveSlide(1); }, 3000);
+
+    function logout() {
+        localStorage.removeItem('eduCurrentUser');
+        window.location.href = 'login.html';
+    }
+
+    // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ТЕСТОВЫХ ДАННЫХ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
+    function cleanMockData() {
+        let requests = JSON.parse(localStorage.getItem('eduRequests')) || [];
+        // Удалить все заявки, у которых есть пометка isMock
+        const cleanRequests = requests.filter(r => !r.isMock);
+        if(requests.length !== cleanRequests.length) {
+            localStorage.setItem('eduRequests', JSON.stringify(cleanRequests));
+        }
+    }
+
+    function renderUserRequests() {
+        // Выполняем очистку
+        cleanMockData();
+
+        const container = document.getElementById('userRequestsList');
+        const currentUser = JSON.parse(localStorage.getItem('eduCurrentUser'));
+        let requests = JSON.parse(localStorage.getItem('eduRequests')) || [];
+        
+        if(!currentUser) { window.location.href = 'login.html'; return; }
+
+        const userReqs = requests.filter(r => r.userLogin === currentUser.login);
+        
+        if(userReqs.length === 0) {
+            container.innerHTML = `
+                <div class="welcome-placeholder">
+                    <h3>Добро пожаловать!</h3>
+                    <p>Выберите курс и оставьте первую заявку, чтобы начать обучение.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = userReqs.map(req => {
+            let statusClass = 'status-new';
+            if(req.status === 'Идет обучение') statusClass = 'status-process';
+            if(req.status === 'Обучение завершено') statusClass = 'status-done';
+
+            let reviewHtml = '';
+            if(req.status === 'Обучение завершено') {
+                if(req.review) {
+                    reviewHtml = `<p style="font-style:italic; margin-top:10px;">Ваш отзыв: "${req.review}"</p>`;
+                } else {
+                    reviewHtml = `
+                        <div class="review-area">
+                            <input type="text" id="reviewInput_${req.id}" placeholder="Напишите отзыв...">
+                            <button class="btn-outline small" onclick="submitReview(${req.id})">Отправить</button>
+                        </div>
+                    `;
+                }
+            }
+
+            return `
+                <div class="request-item">
+                    <div class="request-header">
+                        <span style="font-weight:500;">${req.course}</span>
+                        <span class="status-badge ${statusClass}">${req.status}</span>
+                    </div>
+                    <div class="request-body">Дата: ${req.date} | Оплата: ${req.payment}</div>
+                    ${reviewHtml}
+                </div>
+            `;
+        }).join('');
+    }
+
+    function submitReview(requestId) {
+        let requests = JSON.parse(localStorage.getItem('eduRequests')) || [];
+        const index = requests.findIndex(r => r.id === requestId);
+        if(index !== -1) {
+            const input = document.getElementById(`reviewInput_${requestId}`);
+            if(input && input.value.trim() !== '') {
+                requests[index].review = input.value.trim();
+                localStorage.setItem('eduRequests', JSON.stringify(requests));
+                renderUserRequests();
+                document.getElementById('modalText').innerText = 'Спасибо за ваш отзыв!';
+                document.getElementById('notificationModal').style.display = 'flex';
+            }
+        }
+    }
+
+    function closeModal() { document.getElementById('notificationModal').style.display = 'none'; }
+    window.onload = renderUserRequests;
+</script>
+</body>
+</html>
