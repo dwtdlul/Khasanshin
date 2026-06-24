@@ -56,7 +56,40 @@
         window.location.href = 'login.html';
     }
 
+    // ЖЕСТКАЯ ОЧИСТКА ТЕСТОВЫХ ДАННЫХ ПО ИМЕНАМ
+    function cleanLegacyMockData() {
+        let users = JSON.parse(localStorage.getItem('eduUsers')) || [];
+        let requests = JSON.parse(localStorage.getItem('eduRequests')) || [];
+
+        // 1. Удаляем тестовых пользователей из базы пользователей
+        const cleanUsers = users.filter(u => 
+            u.fio !== 'Петров П.П.' && 
+            u.fio !== 'Сидоров С.С.' && 
+            u.fio !== 'Тестовый Пользователь' &&
+            u.login !== 'testuser' &&
+            u.login !== 'ivanov' &&
+            u.login !== 'petrov' &&
+            u.login !== 'sidorov'
+        );
+        if(users.length !== cleanUsers.length) {
+            localStorage.setItem('eduUsers', JSON.stringify(cleanUsers));
+        }
+
+        // 2. Удаляем заявки этих пользователей
+        const cleanRequests = requests.filter(r => 
+            r.userFio !== 'Петров П.П.' && 
+            r.userFio !== 'Сидоров С.С.' && 
+            r.userFio !== 'Тестовый Пользователь'
+        );
+        if(requests.length !== cleanRequests.length) {
+            localStorage.setItem('eduRequests', JSON.stringify(cleanRequests));
+        }
+    }
+
     function renderAdminTable() {
+        // Принудительно чистим мусор при каждом открытии админки
+        cleanLegacyMockData();
+
         let requests = JSON.parse(localStorage.getItem('eduRequests')) || [];
         const currentUser = JSON.parse(localStorage.getItem('eduCurrentUser'));
         if(!currentUser || currentUser.login !== 'Admin26') { window.location.href = 'login.html'; return; }
