@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель администратора</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="mobile-container">
+    <div class="header-logo">
+        <img src="./images/students_corner.png" alt="Логотип" style="max-width: 100%; height: auto; object-fit: contain;">
+    </div>
+
+    <div class="cabinet-header">
+        <h2>Панель администратора</h2>
+        <button class="btn-outline" onclick="logout()">Выйти</button>
+    </div>
+    
+    <div class="admin-tools">
+        <input type="text" id="adminFilter" placeholder="Фильтр по курсу или ФИО..." onkeyup="renderAdminTable()">
+        <select id="adminStatusFilter" onchange="renderAdminTable()">
+            <option value="all">Все статусы</option>
+            <option value="Новая">Новая</option>
+            <option value="Идет обучение">Идет обучение</option>
+            <option value="Обучение завершено">Обучение завершено</option>
+        </select>
+    </div>
+    
+    <div id="adminTableContainer"></div>
+    
+    <div class="pagination">
+        <button class="btn-outline small" onclick="changePage(-1)">Назад</button>
+        <span id="pageInfo">Страница 1</span>
+        <button class="btn-outline small" onclick="changePage(1)">Вперед</button>
+    </div>
+</div>
+
+<div id="notificationModal" class="modal">
+    <div class="modal-content">
+        <p id="modalText">Уведомление</p>
+        <button class="btn-primary" onclick="closeModal()">Закрыть</button>
+    </div>
+</div>
+
+<script>
+    let currentPageAdmin = 1;
+    const ITEMS_PER_PAGE = 3;
+
+    function logout() {
+        localStorage.removeItem('eduCurrentUser');
+        window.location.href = 'login.html';
+    }
+
+    function renderAdminTable() {
+        let requests = JSON.parse(localStorage.getItem('eduRequests')) || [];
+        const currentUser = JSON.parse(localStorage.getItem('eduCurrentUser'));
+        if(!currentUser || currentUser.login !== 'Admin26') { window.location.href = 'login.html'; return; }
+
+        const container = document.getElementById('adminTableContainer');
+        const filterText = document.getElementById('adminFilter').value.toLowerCase();
+        const statusFilter = document.getElementById('adminStatusFilter').value;
+        
+        let filteredReqs = requests.filter(r => {
+            const matchText = r.course.toLowerCase().includes(filterText) || r.userFio.toLowerCase().includes(filterText);
+            const matchStatus = statusFilter === 'all' || r.status === statusFilter;
+            return matchText && matchStatus;
+        });
+
+        filteredReqs.sort((a, b) => b.id - a.id);
+
+        const totalItems = filteredReqs.length;
+        const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+        if(currentPageAdmin > totalPages && totalPages > 0) currentPageAdmin = totalPages;
+        
+        const start = (currentPageAdmin - 1) * ITEMS_PER_PAGE;
+        const end = start + ITEMS_PER_PAGE;
+        const pageItems = filteredReqs.slice(start, end);
+
+        document.getElementById('pageInfo').innerText = `Страница ${totalItems > 0 ? currentPageAdmin : 0} из ${totalPages}`;
+
+        if(totalItems === 0) {
+            container.innerHTML = `
+                <div class="welcome-placeholder" style="margin-top: 20px;">
+                    <h3>База заявок пуста</h3>
+                    <p>Как только пользователи начнут регистрироваться, их заявки появятся здесь.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = `<div class="admin-row header">
+            <span>Клиент / Курс</span>
+            <span>Статус</span>
+        </div>`;
+
+        pageItems.forEach(req => {
+            html += `
+                <div class="admin-row">
+                    <div>
+                        <strong>${req.userFio}</strong><br>
+                        <span style="font-size:12px;">${req.course} (${req.date})</span>
+                    </div>
+                    <div>
+                        <select class="admin-action" onchange="changeStatus(${req.id}, this.value)">
+                            <option value="Новая" ${req.status === 'Новая' ? 'selected' : ''}>Новая</option>
+                            <option value="Идет обучение" ${req.status === 'Идет обучение' ? 'selected' : ''}>Идет обучение</option>
+                            <option value="Обучение завершено" ${req.status === 'Обучение завершено' ? 'selected' : ''}>Завершено</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function changeStatus(id, newStatus) {
+        let requests = JSON.parse(localStorage.getItem('eduRequests')) || [];
+        const index = requests.findIndex(r => r.id === id);
+        if(index !== -1) {
+            requests[index].status = newStatus;
+            localStorage.setItem('eduRequests', JSON.stringify(requests));
+            renderAdminTable();
+            document.getElementById('modalText').innerText = `Статус заявки изменен на "${newStatus}"`;
+            document.getElementById('notificationModal').style.display = 'flex';
+        }
+    }
+
+    function changePage(delta) {
+        let requests = JSON.parse(localStorage.getItem('eduRequests')) || [];
+        const totalPages = Math.ceil(requests.length / ITEMS_PER_PAGE);
+        currentPageAdmin += delta;
+        if(currentPageAdmin < 1) currentPageAdmin = 1;
+        if(currentPageAdmin > totalPages) currentPageAdmin = totalPages;
+        renderAdminTable();
+    }
+
+    function closeModal() { document.getElementById('notificationModal').style.display = 'none'; }
+    window.onload = renderAdminTable;
+</script>
+</body>
+</html>
