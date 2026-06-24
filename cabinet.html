@@ -65,18 +65,21 @@
         window.location.href = 'login.html';
     }
 
-    // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ТЕСТОВЫХ ДАННЫХ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
+    // ЖЕСТКАЯ ОЧИСТКА ТЕСТОВЫХ ДАННЫХ ПО ИМЕНАМ
     function cleanMockData() {
         let requests = JSON.parse(localStorage.getItem('eduRequests')) || [];
-        // Удалить все заявки, у которых есть пометка isMock
-        const cleanRequests = requests.filter(r => !r.isMock);
+        const cleanRequests = requests.filter(r => 
+            r.userFio !== 'Петров П.П.' && 
+            r.userFio !== 'Сидоров С.С.' && 
+            r.userFio !== 'Тестовый Пользователь'
+        );
         if(requests.length !== cleanRequests.length) {
             localStorage.setItem('eduRequests', JSON.stringify(cleanRequests));
         }
     }
 
     function renderUserRequests() {
-        // Выполняем очистку
+        // Принудительно чистим мусор при каждом открытии ЛК
         cleanMockData();
 
         const container = document.getElementById('userRequestsList');
