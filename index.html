@@ -44,12 +44,14 @@
             <input type="text" id="regFio" placeholder="Иванов И.И.">
         </div>
         <div class="form-group">
-            <label>Телефон</label>
+            <label>Телефон (формат +7 XXX XXX-XX-XX)</label>
             <input type="tel" id="regPhone" placeholder="+7 (999) 000-00-00">
+            <span class="error-msg" id="regPhoneError"></span>
         </div>
         <div class="form-group">
             <label>E-mail</label>
             <input type="email" id="regEmail" placeholder="example@mail.ru">
+            <span class="error-msg" id="regEmailError"></span>
         </div>
         <button type="submit" class="btn-primary">Зарегистрироваться</button>
         <div class="auth-link">Есть аккаунт? <a href="login.html">Войти</a></div>
@@ -87,7 +89,10 @@
         
         let isValid = true;
         const loginRegex = /^[a-zA-Z0-9]{6,}$/;
-        
+        const phoneRegex = /^\+7\s?\(?\d{3}\)?\s?\d{3}-?\d{2}-?\d{2}$/;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        // Валидация логина
         if(!loginRegex.test(login)) {
             document.getElementById('regLoginError').innerText = 'Логин: минимум 6 лат. букв и цифр';
             isValid = false;
@@ -98,11 +103,28 @@
             document.getElementById('regLoginError').innerText = '';
         }
 
+        // Валидация пароля
         if(pass.length < 8) {
             document.getElementById('regPassError').innerText = 'Пароль должен быть 8+ символов';
             isValid = false;
         } else {
             document.getElementById('regPassError').innerText = '';
+        }
+
+        // Валидация телефона
+        if(!phoneRegex.test(phone)) {
+            document.getElementById('regPhoneError').innerText = 'Введите телефон в формате +7 (XXX) XXX-XX-XX';
+            isValid = false;
+        } else {
+            document.getElementById('regPhoneError').innerText = '';
+        }
+
+        // Валидация почты
+        if(!emailRegex.test(email)) {
+            document.getElementById('regEmailError').innerText = 'Введите корректный email (например, name@domain.ru)';
+            isValid = false;
+        } else {
+            document.getElementById('regEmailError').innerText = '';
         }
 
         if(isValid) {

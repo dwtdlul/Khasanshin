@@ -22,7 +22,7 @@
     </div>
     
     <div class="admin-tools">
-        <input type="text" id="adminFilter" placeholder="Фильтр по курсу или ФИО..." onkeyup="renderAdminTable()">
+        <input type="text" id="adminFilter" placeholder="Поиск по ФИО или курсу..." oninput="renderAdminTable()">
         <select id="adminStatusFilter" onchange="renderAdminTable()">
             <option value="all">Все статусы</option>
             <option value="Новая">Новая</option>
@@ -50,46 +50,28 @@
 <script>
     let currentPageAdmin = 1;
     const ITEMS_PER_PAGE = 3;
+    let sortField = 'id'; // Поле для сортировки (по умолчанию по дате создания)
+    let sortDirection = 'desc'; // Направление сортировки (desc - по убыванию)
 
     function logout() {
         localStorage.removeItem('eduCurrentUser');
         window.location.href = 'login.html';
     }
 
-    // ЖЕСТКАЯ ОЧИСТКА ТЕСТОВЫХ ДАННЫХ ПО ИМЕНАМ
-    function cleanLegacyMockData() {
-        let users = JSON.parse(localStorage.getItem('eduUsers')) || [];
-        let requests = JSON.parse(localStorage.getItem('eduRequests')) || [];
-
-        // 1. Удаляем тестовых пользователей из базы пользователей
-        const cleanUsers = users.filter(u => 
-            u.fio !== 'Петров П.П.' && 
-            u.fio !== 'Сидоров С.С.' && 
-            u.fio !== 'Тестовый Пользователь' &&
-            u.login !== 'testuser' &&
-            u.login !== 'ivanov' &&
-            u.login !== 'petrov' &&
-            u.login !== 'sidorov'
-        );
-        if(users.length !== cleanUsers.length) {
-            localStorage.setItem('eduUsers', JSON.stringify(cleanUsers));
+    // Функция сортировки таблицы по клику на заголовок
+    function sortTable(field) {
+        if (sortField === field) {
+            // Если кликнули на то же поле, меняем направление
+            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            // Если кликнули на новое поле, ставим сортировку по возрастанию
+            sortField = field;
+            sortDirection = 'asc';
         }
-
-        // 2. Удаляем заявки этих пользователей
-        const cleanRequests = requests.filter(r => 
-            r.userFio !== 'Петров П.П.' && 
-            r.userFio !== 'Сидоров С.С.' && 
-            r.userFio !== 'Тестовый Пользователь'
-        );
-        if(requests.length !== cleanRequests.length) {
-            localStorage.setItem('eduRequests', JSON.stringify(cleanRequests));
-        }
+        renderAdminTable();
     }
 
     function renderAdminTable() {
-        // Принудительно чистим мусор при каждом открытии админки
-        cleanLegacyMockData();
-
         let requests = JSON.parse(localStorage.getItem('eduRequests')) || [];
         const currentUser = JSON.parse(localStorage.getItem('eduCurrentUser'));
         if(!currentUser || currentUser.login !== 'Admin26') { window.location.href = 'login.html'; return; }
@@ -98,13 +80,28 @@
         const filterText = document.getElementById('adminFilter').value.toLowerCase();
         const statusFilter = document.getElementById('adminStatusFilter').value;
         
+        // Фильтрация данных
         let filteredReqs = requests.filter(r => {
             const matchText = r.course.toLowerCase().includes(filterText) || r.userFio.toLowerCase().includes(filterText);
             const matchStatus = statusFilter === 'all' || r.status === statusFilter;
             return matchText && matchStatus;
         });
 
-        filteredReqs.sort((a, b) => b.id - a.id);
+        // Сортировка данных
+        filteredReqs.sort((a, b) => {
+            let valA = a[sortField];
+            let valB = b[sortField];
+            
+            // Для сортировки по дате и курсу (строки)
+            if (typeof valA === 'string') {
+                valA = valA.toLowerCase();
+                valB = valB.toLowerCase();
+            }
+            
+            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
 
         const totalItems = filteredReqs.length;
         const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
@@ -126,10 +123,19 @@
             return;
         }
 
-        let html = `<div class="admin-row header">
-            <span>Клиент / Курс</span>
-            <span>Статус</span>
-        </div>`;
+        // Заголовок таблицы с возможностью сортировки
+        let html = `
+            <div class="admin-row header" style="cursor: pointer;">
+                <span onclick="sortTable('userFio')">
+                    Клиент / Курс 
+                    ${sortField === 'userFio' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                </span>
+                <span onclick="sortTable('status')" style="text-align: right;">
+                    Статус
+                    ${sortField === 'status' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                </span>
+            </div>
+        `;
 
         pageItems.forEach(req => {
             html += `
@@ -158,6 +164,7 @@
             requests[index].status = newStatus;
             localStorage.setItem('eduRequests', JSON.stringify(requests));
             renderAdminTable();
+            // Всплывающее окно (Модалка) с уведомлением
             document.getElementById('modalText').innerText = `Статус заявки изменен на "${newStatus}"`;
             document.getElementById('notificationModal').style.display = 'flex';
         }

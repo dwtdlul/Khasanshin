@@ -1,5 +1,4 @@
 :root {
-    /* Строго по таблице из PDF */
     --primary-blue: #007bff;
     --dark-blue: #0d47a1;
     --bg-gray: #ced4da;
@@ -35,7 +34,6 @@ body {
     overflow: hidden;
 }
 
-/* МЕСТО ПОД ЛОГОТИП */
 .header-logo {
     display: flex;
     align-items: center;
@@ -66,7 +64,6 @@ p, label, div, span, input, select, button {
     line-height: 1.5;
 }
 
-/* Слайдер */
 .slider-container {
     position: relative;
     width: 100%;
@@ -101,7 +98,6 @@ p, label, div, span, input, select, button {
 .prev { left: 5px; }
 .next { right: 5px; }
 
-/* Формы */
 .form-group { margin-bottom: 15px; }
 label { display: block; margin-bottom: 5px; }
 input, select {
@@ -117,11 +113,14 @@ input:focus, select:focus { border-color: var(--primary-blue); }
 .error-msg {
     color: var(--dark-blue);
     display: block;
-    margin-top: 5px;
-    min-height: 18px;
+    margin-top: 8px;
+    background-color: rgba(206, 212, 218, 0.4);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    border-left: 3px solid var(--primary-blue);
 }
 
-/* Кнопки */
 .btn-primary {
     width: 100%;
     background-color: var(--primary-blue);
@@ -148,7 +147,6 @@ input:focus, select:focus { border-color: var(--primary-blue); }
 .auth-link { text-align: center; margin-top: 15px; }
 .auth-link a { color: var(--primary-blue); text-decoration: none; font-weight: 500; }
 
-/* Кабинет */
 .cabinet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 
 .request-item {
@@ -185,7 +183,6 @@ input:focus, select:focus { border-color: var(--primary-blue); }
     color: var(--white);
 }
 
-/* Админка */
 .admin-tools { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
 .admin-tools input, .admin-tools select { padding: 10px; font-size: 14px; }
 
@@ -210,7 +207,6 @@ input:focus, select:focus { border-color: var(--primary-blue); }
 }
 .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
 
-/* Блок приветствия для заполнения пустот (Цвета строго по гайдлайну) */
 .welcome-placeholder {
     background-color: var(--light-gray);
     border-radius: 12px;
@@ -225,16 +221,16 @@ input:focus, select:focus { border-color: var(--primary-blue); }
     font-weight: 500; 
 }
 .welcome-placeholder p { 
-    color: var(--dark-blue); /* ИСПРАВЛЕНО: Только разрешенный темно-синий */
+    color: var(--dark-blue);
     font-size: 14px; 
 }
 
-/* Модальное окно */
+/* ИСПРАВЛЕНИЕ: rgba(0,0,0,0.5) заменен на разрешенный темно-синий с прозрачностью */
 .modal {
     display: none;
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
+    background: rgba(13, 71, 161, 0.4); /* var(--dark-blue) с прозрачностью */
     justify-content: center;
     align-items: center;
     z-index: 999;
